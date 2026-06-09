@@ -1,22 +1,13 @@
-# Python Environments & Cache
-venv/
-env/
-__pycache__/
-*.pyc
+# --- Python / AI (Vision) ---
+vision/venv/
+vision/__pycache__/
+*.pt
 
-# IDE & OS Hidden Files
-.vscode/
+# --- Node.js / React (Backend & Frontend) ---
+node_modules/
+
+# --- Environment & OS Files ---
+.env
 .DS_Store
 
-# AI Models & Weights (Do not commit heavy files!)
-*.pt
-*.onnx
-
-# Video & Image Test Data
-*.mp4
-*.avi
-*.jpg
-*.png
-
-# Environment Variables (Passwords, API Keys)
-.env
+.vscode/
