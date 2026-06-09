@@ -1,0 +1,22 @@
+# Python Environments & Cache
+venv/
+env/
+__pycache__/
+*.pyc
+
+# IDE & OS Hidden Files
+.vscode/
+.DS_Store
+
+# AI Models & Weights (Do not commit heavy files!)
+*.pt
+*.onnx
+
+# Video & Image Test Data
+*.mp4
+*.avi
+*.jpg
+*.png
+
+# Environment Variables (Passwords, API Keys)
+.env
