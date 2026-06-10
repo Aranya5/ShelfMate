@@ -42,10 +42,15 @@ while cap.isOpened():
     # Show the live video feed on your screen
     cv2.imshow("ShelfMate AI Vision", annotated_frame)
 
-    # Console logging logic (We will activate the HTTP POST later)
+# Console logging logic 
     if people_count > 0:
         print(f"📡 Event Triggered: {people_count} shopper(s) detected.")
-        requests.post(BACKEND_URL, json={"count": people_count}) 
+        
+        # The Armor: Try to send the data, but don't crash if the server is down
+        try:
+            requests.post(BACKEND_URL, json={"count": people_count}, timeout=1)
+        except requests.exceptions.ConnectionError:
+            print("⚠️ Backend offline. Telemetry dropped, but vision remains active.")
 
     # Listen for the 'q' key to shut down gracefully
     if cv2.waitKey(1) & 0xFF == ord('q'):
