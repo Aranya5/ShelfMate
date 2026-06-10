@@ -7,7 +7,7 @@ print("1. Loading YOLOv8 Nano...")
 model = YOLO('yolov8n.pt')
 
 # This is where we will point it to your Express server later
-BACKEND_URL = "http://localhost:5000/api/shelf-events"
+BACKEND_URL = "http://localhost:5001/api/shelf-events"
 
 print("2. Warming up MacBook Webcam...")
 # '0' tells OpenCV to grab the default built-in Mac camera
@@ -45,7 +45,7 @@ while cap.isOpened():
     # Console logging logic (We will activate the HTTP POST later)
     if people_count > 0:
         print(f"📡 Event Triggered: {people_count} shopper(s) detected.")
-        # requests.post(BACKEND_URL, json={"count": people_count}) 
+        requests.post(BACKEND_URL, json={"count": people_count}) 
 
     # Listen for the 'q' key to shut down gracefully
     if cv2.waitKey(1) & 0xFF == ord('q'):
