@@ -11,7 +11,15 @@ BACKEND_URL = "http://localhost:5001/api/shelf-events"
 
 print("2. Loading Test Video Footage...")
 # Feed the static video file into the OpenCV capture engine
-cap = cv2.VideoCapture('store_aisle.mp4')
+cap = cv2.VideoCapture('walk.mp4')
+
+# --- NEW: Dynamic Speed Calculation ---
+# Extract the native frame rate (FPS) from the video file
+video_fps = cap.get(cv2.CAP_PROP_FPS)
+
+# Calculate how many milliseconds to wait between frames (1000ms / FPS)
+# We add a fallback of 33 just in case the video metadata is corrupted
+dynamic_delay = int(1000 / video_fps) if video_fps > 0 else 33
 
 print("🚀 Vision Daemon Active! (Press 'q' in the video window to quit)")
 
@@ -53,7 +61,7 @@ while cap.isOpened():
             print("⚠️ Backend offline. Telemetry dropped, but vision remains active.")
 
     # Listen for the 'q' key to shut down gracefully
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    if cv2.waitKey(dynamic_delay) & 0xFF == ord('q'):
         break
 
 # Clean up hardware resources
