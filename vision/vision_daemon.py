@@ -3,22 +3,14 @@ import requests
 from ultralytics import YOLO
 
 print("1. Loading YOLOv8 Nano...")
-# This will download the tiny .pt weights file locally on the first run
 model = YOLO('yolov8n.pt')
 
-# This is where we will point it to your Express server later
 BACKEND_URL = "http://localhost:5001/api/shelf-events"
 
 print("2. Loading Test Video Footage...")
-# Feed the static video file into the OpenCV capture engine
-cap = cv2.VideoCapture('walk.mp4')
+cap = cv2.VideoCapture('store_aisle.mp4')
 
-# --- NEW: Dynamic Speed Calculation ---
-# Extract the native frame rate (FPS) from the video file
 video_fps = cap.get(cv2.CAP_PROP_FPS)
-
-# Calculate how many milliseconds to wait between frames (1000ms / FPS)
-# We add a fallback of 33 just in case the video metadata is corrupted
 dynamic_delay = int(1000 / video_fps) if video_fps > 0 else 33
 
 print("🚀 Vision Daemon Active! (Press 'q' in the video window to quit)")
@@ -28,43 +20,39 @@ while cap.isOpened():
     if not success:
         print("Failed to grab camera frame.")
         break
-    # # Flip the array horizontally
-    # frame = cv2.flip(frame, 1)
 
-    # Run YOLO on the live frame
-    results = model(frame, verbose=False)
-    people_count = 0
-
-    # Let YOLO draw its own bounding boxes on a copy of the frame
+    # --- THE UPGRADE: Stateful Tracking ---
+    # persist=True gives memory. classes=0 filters ONLY humans. conf=0.65 applies your threshold.
+    results = model.track(frame, persist=True, classes=0, conf=0.65, verbose=False)
+    
+    # Let YOLO draw its bounding boxes AND tracking IDs
     annotated_frame = results[0].plot()
 
-    # Extract the raw JSON data for the backend
-    for box in results[0].boxes:
-        class_id = int(box.cls[0])
-        class_name = model.names[class_id]
-        confidence = float(box.conf[0])
+    # Extract the unique tracking IDs for this specific frame
+    active_shopper_ids = []
+    if results[0].boxes.id is not None:
+        # Convert the tensor of IDs to a standard Python list
+        active_shopper_ids = results[0].boxes.id.int().cpu().tolist()
 
-        if class_name == 'person' and confidence > 0.65:
-            people_count += 1
+    people_count = len(active_shopper_ids)
 
     # Show the live video feed on your screen
     cv2.imshow("ShelfMate AI Vision", annotated_frame)
 
-# Console logging logic 
+    # --- Telemetry & Backend Logging ---
     if people_count > 0:
-        print(f"📡 Event Triggered: {people_count} shopper(s) detected.")
+        # Now we can see EXACTLY who is in the frame
+        print(f"📡 Event: {people_count} shopper(s) detected. IDs: {active_shopper_ids}")
         
-        # The Armor: Try to send the data, but don't crash if the server is down
         try:
+            # We will eventually send the IDs here for dwell time math
             requests.post(BACKEND_URL, json={"count": people_count}, timeout=1)
         except requests.exceptions.ConnectionError:
             print("⚠️ Backend offline. Telemetry dropped, but vision remains active.")
 
-    # Listen for the 'q' key to shut down gracefully
     if cv2.waitKey(dynamic_delay) & 0xFF == ord('q'):
         break
 
-# Clean up hardware resources
 cap.release()
 cv2.destroyAllWindows()
 print("🛑 Camera released safely.")
