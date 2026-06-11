@@ -2,6 +2,7 @@
 vision/venv/
 vision/__pycache__/
 *.pt
+*.mp4
 
 # --- Node.js / React (Backend & Frontend) ---
 node_modules/

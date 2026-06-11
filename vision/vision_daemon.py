@@ -9,9 +9,9 @@ model = YOLO('yolov8n.pt')
 # This is where we will point it to your Express server later
 BACKEND_URL = "http://localhost:5001/api/shelf-events"
 
-print("2. Warming up MacBook Webcam...")
-# '0' tells OpenCV to grab the default built-in Mac camera
-cap = cv2.VideoCapture(1) 
+print("2. Loading Test Video Footage...")
+# Feed the static video file into the OpenCV capture engine
+cap = cv2.VideoCapture('store_aisle.mp4')
 
 print("🚀 Vision Daemon Active! (Press 'q' in the video window to quit)")
 
@@ -20,8 +20,8 @@ while cap.isOpened():
     if not success:
         print("Failed to grab camera frame.")
         break
-    # Flip the array horizontally
-    frame = cv2.flip(frame, 1)
+    # # Flip the array horizontally
+    # frame = cv2.flip(frame, 1)
 
     # Run YOLO on the live frame
     results = model(frame, verbose=False)
