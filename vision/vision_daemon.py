@@ -2,7 +2,6 @@ import cv2
 import requests
 import numpy as np
 import json
-from shapely.geometry import Polygon
 from ultralytics import YOLO
 
 print("1. Loading YOLOv8 Nano...")
@@ -16,26 +15,22 @@ cap = cv2.VideoCapture('test.mp4')
 video_fps = cap.get(cv2.CAP_PROP_FPS)
 dynamic_delay = int(1000 / video_fps) if video_fps > 0 else 33
 
-# --- SPATIAL MAPPING: Load and Expand Zones ---
+# --- SPATIAL MAPPING: Load Explicit Zones ---
 try:
     with open('zones.json', 'r') as f:
         zone_data = json.load(f)
         
     shelves = []
-    outer_halos = []
     
-    for shelf_coords in zone_data["shelves"]:
-        # The Tight Inner Zone (Interaction)
-        inner_zone = np.array(shelf_coords, np.int32)
-        shelves.append(inner_zone)
+    for shelf in zone_data["shelves"]:
+        # Load both zones directly from your perfectly mapped JSON
+        outer_zone = np.array(shelf["outer"], np.int32)
+        inner_zone = np.array(shelf["inner"], np.int32)
         
-        # The Expanded Outer Zone (Consideration)
-        poly = Polygon(shelf_coords)
-        expanded_poly = poly.buffer(100, join_style=2) # Expands 100 pixels outward
-        outer_zone = np.array(expanded_poly.exterior.coords, np.int32)
-        outer_halos.append(outer_zone)
+        # Store them as a tuple pairing: (Inner, Outer)
+        shelves.append((inner_zone, outer_zone))
         
-    print(f"✅ Loaded {len(shelves)} physical shelves and auto-generated consideration zones.")
+    print(f"✅ Loaded {len(shelves)} perfectly mapped dual-zone shelves.")
 except FileNotFoundError:
     print("❌ Error: zones.json not found. Run zone_mapper.py first!")
     exit()
@@ -53,7 +48,8 @@ while cap.isOpened():
     annotated_frame = results[0].plot()
 
     # --- DRAW ZONES ---
-    for i, (inner, outer) in enumerate(zip(shelves, outer_halos)):
+    # We now iterate directly through the list of tuples instead of using zip()
+    for i, (inner, outer) in enumerate(shelves):
         # Draw Outer Halo (Yellow)
         cv2.polylines(annotated_frame, [outer], isClosed=True, color=(0, 255, 255), thickness=2, lineType=cv2.LINE_AA)
         # Draw Inner Zone (Red)
@@ -77,7 +73,7 @@ while cap.isOpened():
             cv2.circle(annotated_frame, (feet_x, feet_y), radius=5, color=(0, 255, 0), thickness=-1)
 
             # Check Collisions for every shelf
-            for i, (inner, outer) in enumerate(zip(shelves, outer_halos)):
+            for i, (inner, outer) in enumerate(shelves):
                 # Check Outer Zone First
                 in_outer = cv2.pointPolygonTest(outer, (feet_x, feet_y), measureDist=False) >= 0
                 
