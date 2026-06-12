@@ -1,0 +1,16 @@
+tracker_type: botsort
+track_high_thresh: 0.45
+track_low_thresh: 0.1
+new_track_thresh: 0.5
+track_buffer: 120
+match_thresh: 0.8
+
+# --- BoT-SORT Specific "Magic" ---
+gmc_method: sparseOptFlow
+proximity_thresh: 0.5
+appearance_thresh: 0.25
+with_reid: False
+
+# --- The Missing Keys for the New YOLO Parser ---
+model: yolov8n.pt
+fuse_score: True
